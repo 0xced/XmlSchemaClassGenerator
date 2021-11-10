@@ -1,16 +1,20 @@
 ﻿using System;
 using System.CodeDom;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Schema;
+using Microsoft.CSharp;
 
 namespace XmlSchemaClassGenerator
 {
     public static class CodeUtilities
     {
+        private static readonly CodeDomProvider Provider = new CSharpCodeProvider();
+
         // Match non-letter followed by letter
         static readonly Regex PascalCaseRegex = new(@"[^\p{L}]\p{L}", RegexOptions.Compiled);
 
@@ -379,7 +383,7 @@ namespace XmlSchemaClassGenerator
 
         public static bool IsUsingNamespace(string namespaceName, GeneratorConfiguration conf) => UsingNamespaces.Any(n => n.Namespace == namespaceName && n.Condition(conf));
 
-        public static CodeTypeReference CreateTypeReference(Type t, GeneratorConfiguration conf)
+        public static CodeTypeReference CreateTypeReference(Type t, GeneratorConfiguration conf, bool nullableReferenceType = false)
         {
             if (IsUsingNamespace(t, conf))
             {
@@ -397,6 +401,12 @@ namespace XmlSchemaClassGenerator
             else
             {
                 var typeRef = new CodeTypeReference(t, conf.CodeTypeReferenceOptions);
+                if (nullableReferenceType)
+                {
+                    // Use `Provider.GetTypeOutput(typeRef)` instead of `t.FullName` in order to get built-in types
+                    // e.g. `string?` instead of `System.String?`
+                    typeRef = new CodeTypeReference(Provider.GetTypeOutput(typeRef) + "?", conf.CodeTypeReferenceOptions);
+                }
 
                 foreach (var typeArg in typeRef.TypeArguments)
                 {

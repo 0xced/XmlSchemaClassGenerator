@@ -26,6 +26,7 @@
     <PackageReference Include="Glob.cs" Version="5.1.766" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.11.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+    <PackageReference Include="NullabilityInfo" Version="1.0.3" PrivateAssets="all" />
     <PackageReference Include="System.CodeDom" Version="6.0.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="6.0.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />

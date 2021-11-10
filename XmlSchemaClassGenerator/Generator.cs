@@ -115,6 +115,12 @@ namespace XmlSchemaClassGenerator
             set { _configuration.GenerateNullables = value; }
         }
 
+        public bool UseNullableReferenceTypes
+        {
+            get { return _configuration.UseNullableReferenceTypes; }
+            set { _configuration.UseNullableReferenceTypes = value; }
+        }
+
         public bool UseShouldSerializePattern
         {
             get { return _configuration.UseShouldSerializePattern; }
@@ -335,7 +341,7 @@ namespace XmlSchemaClassGenerator
 
             var m = new ModelBuilder(_configuration, set);
             var namespaces = m.GenerateCode();
-            var writer = _configuration.OutputWriter ?? new FileOutputWriter(OutputFolder ?? ".") { Configuration = _configuration };
+            var writer = _configuration.OutputWriter ?? new FileOutputWriter(OutputFolder ?? ".", _configuration.UseNullableReferenceTypes) { Configuration = _configuration };
 
             foreach (var ns in namespaces)
             {

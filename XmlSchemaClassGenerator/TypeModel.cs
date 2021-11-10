@@ -168,7 +168,7 @@ namespace XmlSchemaClassGenerator
             }
         }
 
-        public virtual CodeTypeReference GetReferenceFor(NamespaceModel referencingNamespace, bool collection = false, bool forInit = false, bool attribute = false)
+        public virtual CodeTypeReference GetReferenceFor(NamespaceModel referencingNamespace, bool collection = false, bool forInit = false, bool attribute = false, bool nullableReferenceType = false)
         {
             string name;
             var referencingOptions = Configuration.CodeTypeReferenceOptions;
@@ -769,7 +769,7 @@ namespace XmlSchemaClassGenerator
             {
                 return PropertyType.GetReferenceFor(OwningType.Namespace,
                     collection: IsCollection || IsArray || (IsList && IsAttribute),
-                    attribute: IsAttribute);
+                    attribute: IsAttribute, nullableReferenceType: Configuration.UseNullableReferenceTypes && (IsNillable || IsNullable));
             }
         }
 
@@ -1442,7 +1442,7 @@ namespace XmlSchemaClassGenerator
             return null;
         }
 
-        public override CodeTypeReference GetReferenceFor(NamespaceModel referencingNamespace, bool collection = false, bool forInit = false, bool attribute = false)
+        public override CodeTypeReference GetReferenceFor(NamespaceModel referencingNamespace, bool collection = false, bool forInit = false, bool attribute = false, bool nullableReferenceType = false)
         {
             var type = ValueType;
 
@@ -1469,7 +1469,7 @@ namespace XmlSchemaClassGenerator
                     type = collectionType;
             }
 
-            return CodeUtilities.CreateTypeReference(type, Configuration);
+            return CodeUtilities.CreateTypeReference(type, Configuration, nullableReferenceType);
         }
 
         public override CodeExpression GetDefaultValueFor(string defaultString, bool attribute)

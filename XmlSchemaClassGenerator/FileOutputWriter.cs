@@ -11,7 +11,7 @@ namespace XmlSchemaClassGenerator
     {
         public GeneratorConfiguration Configuration { get; set; }
 
-        public FileOutputWriter(string directory, bool createIfNotExists = true)
+        public FileOutputWriter(string directory, bool useNullableReferenceTypes, bool createIfNotExists = true) : base(useNullableReferenceTypes)
         {
             OutputDirectory = directory;
 

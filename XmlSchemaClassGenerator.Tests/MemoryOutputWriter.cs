@@ -10,6 +10,10 @@ namespace XmlSchemaClassGenerator.Tests
     {
         private readonly List<string> _contents = new();
 
+        public MemoryOutputWriter(bool useNullableReferenceTypes) : base(useNullableReferenceTypes)
+        {
+        }
+
         public IEnumerable<string> Content => _contents;
 
         public override void Write(CodeNamespace cn)

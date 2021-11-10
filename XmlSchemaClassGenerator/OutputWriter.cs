@@ -9,8 +9,20 @@ namespace XmlSchemaClassGenerator
 {
     public abstract class OutputWriter
     {
-        protected OutputWriter()
+        private readonly bool useNullableReferenceTypes;
+
+        #warning removing the default constructor is a breaking change.
+        // Is this acceptable? The alternative is to default to useNullableReferenceTypes: false but subclasses
+        // (other than known one in XmlSampleGenerator, i.e. FileOutputWriter) will never know about it.
+#if false
+        protected OutputWriter() : this(useNullableReferenceTypes: false)
         {
+        }
+#endif
+
+        protected OutputWriter(bool useNullableReferenceTypes)
+        {
+            this.useNullableReferenceTypes = useNullableReferenceTypes;
         }
 
         protected virtual CodeGeneratorOptions Options { get; } = new CodeGeneratorOptions
@@ -26,6 +38,11 @@ namespace XmlSchemaClassGenerator
         protected void Write(TextWriter writer, CodeCompileUnit cu)
         {
             using var sw = new SemicolonRemovalTextWriter(writer);
+            if (useNullableReferenceTypes)
+            {
+                Provider.GenerateCodeFromCompileUnit(new CodeSnippetCompileUnit("#nullable enable"), sw, Options);
+            }
+            cu.StartDirectives.Add(new CodeDirective());
             Provider.GenerateCodeFromCompileUnit(cu, sw, Options);
         }
 

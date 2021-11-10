@@ -8,7 +8,7 @@ namespace XmlSchemaClassGenerator.Tests
         private readonly List<string> _files;
 
         public FileWatcherOutputWriter(string directory)
-            : base(directory)
+            : base(directory, useNullableReferenceTypes: false)
         {
             _files = new List<string>();
         }

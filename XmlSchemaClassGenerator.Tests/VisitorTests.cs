@@ -9,14 +9,14 @@ using Xunit;
 namespace XmlSchemaClassGenerator.Tests {
     public class VisitorTests
     {
-        private static IEnumerable<string> ConvertXml(string name, string xsd, Generator generatorPrototype = null)
+        private static IEnumerable<string> ConvertXml(string name, string xsd, Generator generatorPrototype)
         {
             if (name is null)
             {
                 throw new ArgumentNullException(nameof(name));
             }
 
-            var writer = new MemoryOutputWriter();
+            var writer = new MemoryOutputWriter(generatorPrototype.UseNullableReferenceTypes);
 
             var gen = new Generator
             {

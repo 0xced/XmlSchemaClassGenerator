@@ -30,14 +30,14 @@ namespace XmlSchemaClassGenerator.Tests
             Output = output;
         }
 
-        private static IEnumerable<string> ConvertXml(string name, IEnumerable<string> xsds, Generator generatorPrototype = null)
+        private static IEnumerable<string> ConvertXml(string name, IEnumerable<string> xsds, Generator generatorPrototype)
         {
             if (name is null)
             {
                 throw new ArgumentNullException(nameof(name));
             }
 
-            var writer = new MemoryOutputWriter();
+            var writer = new MemoryOutputWriter(generatorPrototype.UseNullableReferenceTypes);
 
             var gen = new Generator
             {
@@ -2166,6 +2166,53 @@ namespace Test
             Assert.NotNull(prop);
             var xmlElementNullableAttribute2 = prop.GetCustomAttribute<XmlElementAttribute>();
             Assert.True(xmlElementNullableAttribute2.IsNullable);
+        }
+
+        [Fact]
+        public void TestNullableReferenceType()
+        {
+            const string xsd = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+            <xs:schema xmlns:xs=""http://www.w3.org/2001/XMLSchema"" targetNamespace=""Test_NS1""
+            elementFormDefault=""qualified"" attributeFormDefault=""unqualified"">
+            <xs:element name=""TestType"">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name=""StringProperty"" type=""xs:string"" nillable=""true"" minOccurs=""0""/>
+                        <xs:element name=""StringNullableProperty"" type=""xs:string"" nillable=""true""/>
+                        <xs:element name=""StringNullableProperty2"" type=""xs:string"" nillable=""true"" minOccurs=""1""/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            </xs:schema>";
+
+            var generator = new Generator
+            {
+                NamespaceProvider = new NamespaceProvider
+                {
+                    GenerateNamespace = key => key.XmlSchemaNamespace
+                },
+                GenerateNullables = true,
+                UseNullableReferenceTypes = true,
+            };
+
+            var contents = ConvertXml(nameof(TestForceIsNullableGeneration), xsd, generator).ToArray();
+            Assert.Single(contents);
+            var assembly = Compiler.Compile(nameof(TestForceIsNullableGeneration), contents);
+            var testType = assembly.GetType("Test_NS1.TestType");
+            Assert.NotNull(testType);
+
+            var prop = testType.GetProperty("StringProperty");
+            Assert.NotNull(prop);
+
+            Assert.Equal(NullabilityState.Nullable, prop.GetNullabilityInfo().ReadState);
+
+            prop = testType.GetProperty("StringNullableProperty");
+            Assert.NotNull(prop);
+            Assert.Equal(NullabilityState.Nullable, prop.GetNullabilityInfo().ReadState);
+
+            prop = testType.GetProperty("StringNullableProperty2");
+            Assert.NotNull(prop);
+            Assert.Equal(NullabilityState.Nullable, prop.GetNullabilityInfo().ReadState);
         }
 
         [Fact]

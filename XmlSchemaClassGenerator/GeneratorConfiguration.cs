@@ -107,6 +107,10 @@ namespace XmlSchemaClassGenerator
         /// </summary>
         public bool GenerateNullables { get; set; }
         /// <summary>
+        /// Use nullable reference types for optional elements?
+        /// </summary>
+        public bool UseNullableReferenceTypes { get; set; }
+        /// <summary>
         /// Use ShouldSerialize pattern in where possible to support nullables?
         /// </summary>
         public bool UseShouldSerializePattern { get; set; }
