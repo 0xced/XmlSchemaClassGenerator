@@ -10,6 +10,8 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace XmlSchemaClassGenerator
 {
@@ -29,23 +31,24 @@ namespace XmlSchemaClassGenerator
             Types = new Dictionary<string, TypeModel>();
         }
 
-        public static CodeNamespace Generate(string namespaceName, IEnumerable<NamespaceModel> parts, GeneratorConfiguration conf)
+        public static NamespaceDeclarationSyntax Generate(string namespaceName, IEnumerable<NamespaceModel> parts, GeneratorConfiguration conf)
         {
-            var codeNamespace = new CodeNamespace(namespaceName);
+            var namespaceSyntax = new NamespaceDeclarationSyntax(namespaceName);
 
             foreach (var (Namespace, Condition) in CodeUtilities.UsingNamespaces.Where(n => n.Condition(conf)).OrderBy(n => n.Namespace))
-                codeNamespace.Imports.Add(new CodeNamespaceImport(Namespace));
+                namespaceSyntax.Imports.Add(new CodeNamespaceImport(Namespace));
 
             foreach (var typeModel in parts.SelectMany(x => x.Types.Values).ToList())
             {
                 var type = typeModel.Generate();
                 if (type != null)
                 {
-                    codeNamespace.Types.Add(type);
+                    namespaceSyntax.Members.Add(type)
+                    namespaceSyntax.Types.Add(type);
                 }
             }
 
-            return codeNamespace;
+            return namespaceSyntax;
         }
     }
 
@@ -74,8 +77,10 @@ namespace XmlSchemaClassGenerator
 
         protected TypeModel(GeneratorConfiguration configuration) : base(configuration) { }
 
-        public virtual CodeTypeDeclaration Generate()
+        public virtual TypeSyntax Generate()
         {
+            TypeDeclarationSyntax
+            SyntaxFactory.TypeDeclaration()
             var typeDeclaration = new CodeTypeDeclaration { Name = Name };
 
             typeDeclaration.Comments.AddRange(GetComments(Documentation).ToArray());
@@ -87,7 +92,7 @@ namespace XmlSchemaClassGenerator
                 new(new CodePrimitiveExpression(Configuration.CreateGeneratedCodeAttributeVersion ? Configuration.Version.Version : "")));
             typeDeclaration.CustomAttributes.Add(generatedAttribute);
 
-            return typeDeclaration;
+            return null;
         }
 
         protected void GenerateTypeAttribute(CodeTypeDeclaration typeDeclaration)

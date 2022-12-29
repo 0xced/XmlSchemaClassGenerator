@@ -6,6 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Schema;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace XmlSchemaClassGenerator
 {
@@ -362,6 +365,9 @@ namespace XmlSchemaClassGenerator
                     {
                         comment.Append(" using the following command:");
                     }
+
+                    ns.WithCloseBraceToken(Token(TriviaList(Comment(comment.ToString())), SyntaxKind.CloseBraceToken, TriviaList()));
+                    ns.WithAdditionalAnnotations();
                     ns.Comments.Add(new CodeCommentStatement(comment.ToString()));
                     if (GenerateCommandLineArgumentsComment)
                     {

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace XmlSchemaClassGenerator
 {
@@ -1101,7 +1102,7 @@ namespace XmlSchemaClassGenerator
                 .ToList();
         }
 
-        public IEnumerable<CodeNamespace> GenerateCode()
+        public IEnumerable<NamespaceDeclarationSyntax> GenerateCode()
         {
             var hierarchy = NamespaceHierarchyItem.Build(Namespaces.Values.GroupBy(x => x.Name).SelectMany(x => x))
                 .MarkAmbiguousNamespaceTypes();

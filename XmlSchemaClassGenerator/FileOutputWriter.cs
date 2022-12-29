@@ -1,9 +1,12 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace XmlSchemaClassGenerator
 {
@@ -28,24 +31,26 @@ namespace XmlSchemaClassGenerator
         /// </summary>
         public IList<string> WrittenFiles { get; } = new List<string>();
 
-        public override void Write(CodeNamespace cn)
+        public override void Write(NamespaceDeclarationSyntax tree)
         {
-            var cu = new CodeCompileUnit();
-            cu.Namespaces.Add(cn);
+
+            var cu = SyntaxFactory.CompilationUnit();
+            cu.AddUsings();
+            //cu.Namespaces.Add(cn);
 
             if (Configuration?.SeparateClasses == true)
             {
-                WriteSeparateFiles(cn);
+                WriteSeparateFiles(tree);
             }
             else
             {
-                var path = Path.Combine(OutputDirectory, cn.Name + ".cs");
+                var path = Path.Combine(OutputDirectory, tree.Name + ".cs");
                 Configuration?.WriteLog(path);
                 WriteFile(path, cu);
             }
         }
 
-        protected virtual void WriteFile(string path, CodeCompileUnit cu)
+        protected virtual void WriteFile(string path, CompilationUnitSyntax cu)
         {
             FileStream fs = null;
 
@@ -66,11 +71,12 @@ namespace XmlSchemaClassGenerator
             }
         }
 
-        private void WriteSeparateFiles(CodeNamespace cn)
+        private void WriteSeparateFiles(NamespaceDeclarationSyntax cn)
         {
-            var dirPath = Path.Combine(OutputDirectory, ValidateName(cn.Name));
-            var ccu = new CodeCompileUnit();
-            var cns = new CodeNamespace(ValidateName(cn.Name));
+            var name = ValidateName(cn.Name.ToString());
+            var dirPath = Path.Combine(OutputDirectory, name);
+            var ccu = ParseCompilationUnit("");
+            //var cns = new CodeNamespace(name);
 
             Directory.CreateDirectory(dirPath);
 
@@ -78,7 +84,7 @@ namespace XmlSchemaClassGenerator
             cns.Comments.AddRange(cn.Comments);
             ccu.Namespaces.Add(cns);
 
-            foreach (CodeTypeDeclaration ctd in cn.Types)
+            foreach (CodeTypeDeclaration ctd in cn.Members)
             {
                 var path = Path.Combine(dirPath, ctd.Name + ".cs");
                 cns.Types.Clear();
