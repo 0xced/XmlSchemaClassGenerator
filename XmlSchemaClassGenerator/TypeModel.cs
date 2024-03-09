@@ -1105,6 +1105,8 @@ namespace XmlSchemaClassGenerator
                         if ((qualifiedName.Namespace == XmlSchema.Namespace && qualifiedName.Name != "anySimpleType") &&
                             (xmlSchemaType.Datatype.ValueType == typeof(DateTime) && Configuration.DateTimeWithTimeZone) == false)
                         {
+                            if (qualifiedName.Name == "date" && Configuration.NetCoreSpecificCode)
+                                break;
                             args.Add(new("DataType", new CodePrimitiveExpression(qualifiedName.Name)));
                             break;
                         }
@@ -1296,6 +1298,12 @@ namespace XmlSchemaClassGenerator
                 }
                 throw new NotSupportedException(string.Format("Resolving default value {0} for QName not supported.", defaultString));
             }
+#if NET6_0_OR_GREATER
+            else if (type == typeof(DateOnly))
+            {
+                return new CodeMethodInvokeExpression(TypeRefExpr<DateOnly>(), nameof(DateOnly.Parse), new CodePrimitiveExpression(defaultString));
+            }
+#endif
             else if (type == typeof(DateTime))
             {
                 return new CodeMethodInvokeExpression(TypeRefExpr<DateTime>(), nameof(DateTime.Parse), new CodePrimitiveExpression(defaultString));

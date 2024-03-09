@@ -26,6 +26,7 @@ namespace XmlSchemaClassGenerator.Tests
                 DataAnnotationMode = generatorPrototype.DataAnnotationMode,
                 GenerateDesignerCategoryAttribute = generatorPrototype.GenerateDesignerCategoryAttribute,
                 GenerateComplexTypesForCollections = generatorPrototype.GenerateComplexTypesForCollections,
+                NetCoreSpecificCode = generatorPrototype.NetCoreSpecificCode,
                 EntityFramework = generatorPrototype.EntityFramework,
                 AssemblyVisible = generatorPrototype.AssemblyVisible,
                 GenerateInterfaces = generatorPrototype.GenerateInterfaces,
@@ -47,14 +48,16 @@ namespace XmlSchemaClassGenerator.Tests
             return writer.Content;
         }
 
-        [Fact]
-        public void WhenDateTimeOffsetIsUsed_NoDataTypePropertyIsPresent()
+        [Theory]
+        [InlineData("date")]
+        [InlineData("dateTime")]
+        public void WhenDateTimeOffsetIsUsed_NoDataTypePropertyIsPresent(string dataType)
         {
             var xsd = @$"<?xml version=""1.0"" encoding=""UTF-8""?>
 <xs:schema elementFormDefault=""qualified"" xmlns:xs=""http://www.w3.org/2001/XMLSchema"">
 	<xs:complexType name=""document"">
 		<xs:sequence>
-			<xs:element name=""someDate"" type=""xs:dateTime"" />
+			<xs:element name=""someDate"" type=""xs:{dataType}"" />
 		</xs:sequence>
 	</xs:complexType>
 </xs:schema>";
@@ -67,6 +70,34 @@ namespace XmlSchemaClassGenerator.Tests
                         GenerateNamespace = _ => "Test"
                     },
                     DateTimeWithTimeZone = true
+                });
+
+            var expectedXmlSerializationAttribute = "[System.Xml.Serialization.XmlElementAttribute(\"someDate\")]";
+            var generatedProperty = generatedType.First();
+
+            Assert.Contains(expectedXmlSerializationAttribute, generatedProperty);
+        }
+
+        [Fact]
+        public void WhenDateOnlyIsUsed_NoDataTypePropertyIsPresent()
+        {
+            var xsd = @$"<?xml version=""1.0"" encoding=""UTF-8""?>
+<xs:schema elementFormDefault=""qualified"" xmlns:xs=""http://www.w3.org/2001/XMLSchema"">
+	<xs:complexType name=""document"">
+		<xs:sequence>
+			<xs:element name=""someDate"" type=""xs:date"" />
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>";
+
+            var generatedType = ConvertXml(
+                xsd, new()
+                {
+                    NamespaceProvider = new()
+                    {
+                        GenerateNamespace = _ => "Test"
+                    },
+                    NetCoreSpecificCode = true,
                 });
 
             var expectedXmlSerializationAttribute = "[System.Xml.Serialization.XmlElementAttribute(\"someDate\")]";
@@ -104,9 +135,11 @@ namespace XmlSchemaClassGenerator.Tests
         }
 
         [Theory]
-        [InlineData(false, "System.DateTime")]
-        [InlineData(true, "System.DateTimeOffset")]
-        public void TestCorrectDateTimeDataType(bool dateTimeWithTimeZone, string expectedType)
+        [InlineData(true, true, "System.DateTimeOffset")]
+        [InlineData(true, false, "System.DateTimeOffset")]
+        [InlineData(false, true, "System.DateTime")]
+        [InlineData(false, false, "System.DateTime")]
+        public void TestCorrectDateTimeDataType(bool dateTimeWithTimeZone, bool netCoreSpecificCode, string expectedType)
         {
             var xsd = @$"<?xml version=""1.0"" encoding=""UTF-8""?>
 <xs:schema elementFormDefault=""qualified"" xmlns:xs=""http://www.w3.org/2001/XMLSchema"">
@@ -124,6 +157,40 @@ namespace XmlSchemaClassGenerator.Tests
                     {
                         GenerateNamespace = _ => "Test"
                     },
+                    NetCoreSpecificCode = netCoreSpecificCode,
+                    DateTimeWithTimeZone = dateTimeWithTimeZone
+                });
+
+            var expectedProperty = $"public {expectedType} SomeDate";
+            var generatedProperty = generatedType.First();
+
+            Assert.Contains(expectedProperty, generatedProperty);
+        }
+
+        [Theory]
+        [InlineData(true, true, "System.DateTimeOffset")]
+        [InlineData(true, false, "System.DateTimeOffset")]
+        [InlineData(false, true, "System.DateOnly")]
+        [InlineData(false, false, "System.DateTime")]
+        public void TestCorrectDateDataType(bool dateTimeWithTimeZone, bool netCoreSpecificCode, string expectedType)
+        {
+            var xsd = @$"<?xml version=""1.0"" encoding=""UTF-8""?>
+<xs:schema elementFormDefault=""qualified"" xmlns:xs=""http://www.w3.org/2001/XMLSchema"">
+	<xs:complexType name=""document"">
+		<xs:sequence>
+			<xs:element name=""someDate"" type=""xs:date"" />
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>";
+
+            var generatedType = ConvertXml(
+                xsd, new()
+                {
+                    NamespaceProvider = new()
+                    {
+                        GenerateNamespace = _ => "Test"
+                    },
+                    NetCoreSpecificCode = netCoreSpecificCode,
                     DateTimeWithTimeZone = dateTimeWithTimeZone
                 });
 
